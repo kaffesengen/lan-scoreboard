@@ -1,25 +1,28 @@
 <!doctype html>
-<html lang="en">
+<html lang="no">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LAN Scoreboard</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LAN Scoreboard (Sender)</title>
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Google Cast Web Sender SDK (Framework API) -->
+  <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
 </head>
 <body>
   <div class="app">
     <header>
       <h1>LAN Scoreboard</h1>
-      <p>Add players, give points, and watch the ranking update.</p>
+      <p>Konfigurer her, vis på TV via Chromecast.</p>
+      <!-- Cast button (må styles litt i CSS) -->
+      <google-cast-launcher id="castButton"></google-cast-launcher>
     </header>
 
     <section class="controls">
-      <input id="nameInput" placeholder="Username..." maxlength="16" />
-      <button id="addBtn">Add</button>
+      <input id="nameInput" placeholder="Brukernavn..." maxlength="16" />
+      <button id="addBtn">Legg til</button>
       <button id="resetBtn" class="danger">Reset</button>
     </section>
-
-    <section class="podium" id="podium"></section>
 
     <section>
       <h2>Ranking</h2>
@@ -27,6 +30,6 @@
     </section>
   </div>
 
-  <script src="app.js"></script>
+  <script src="sender.js"></script>
 </body>
 </html>
