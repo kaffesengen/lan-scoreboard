@@ -3,10 +3,10 @@
 // ======================
 const APP_ID = "D6AC56C5";
 const NAMESPACE = "urn:x-cast:com.kaffesengen.lanscoreboard";
-const STORAGE_KEY = "lan_scoreboard_cast_v1";
+const STORAGE_KEY = "lan_scoreboard_cast_v2";
 
 // ======================
-// UI ELEMENTS
+// UI
 // ======================
 const nameInput = document.getElementById("nameInput");
 const addBtn = document.getElementById("addBtn");
@@ -19,13 +19,9 @@ const castHint = document.getElementById("castHint");
 // ======================
 let players = loadPlayers();
 
-// ----------------------
-// Local storage
-// ----------------------
 function savePlayers() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(players));
 }
-
 function loadPlayers() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -35,13 +31,14 @@ function loadPlayers() {
   }
 }
 
-// ----------------------
-// Helpers
-// ----------------------
 function normalizeName(name) {
   return name.trim().replace(/\s+/g, " ");
 }
-
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  }[c]));
+}
 function sortedPlayers() {
   return [...players].sort((a, b) => {
     if (b.points !== a.points) return b.points - a.points;
@@ -49,19 +46,59 @@ function sortedPlayers() {
   });
 }
 
-function escapeHtml(s) {
-  return s.replace(/[&<>"']/g, c => ({
-    "&":"&amp;",
-    "<":"&lt;",
-    ">":"&gt;",
-    '"':"&quot;",
-    "'":"&#039;"
-  }[c]));
+// ======================
+// CAST BUTTON VISIBILITY (robust)
+// ======================
+function getCastButtonEl() {
+  return document.getElementById("castButton") || document.querySelector("google-cast-launcher");
 }
 
-// ----------------------
+function forceShowCastButton() {
+  const el = getCastButtonEl();
+  if (!el) return;
+  // Cast SDK kan sette inline style="display:none". Vi overstyrer til block.
+  el.style.display = "block";
+  el.style.width = "38px";
+  el.style.height = "38px";
+}
+
+function setHint(text, ok) {
+  castHint.textContent = text;
+  castHint.classList.toggle("ok", !!ok);
+}
+
+function getSession() {
+  try {
+    return cast.framework.CastContext.getInstance().getCurrentSession();
+  } catch {
+    return null;
+  }
+}
+
+function sendStateToReceiver() {
+  const session = getSession();
+  if (!session) {
+    setHint("🔄 Ikke tilkoblet Chromecast", false);
+    return;
+  }
+
+  const payload = {
+    type: "STATE",
+    updatedAt: Date.now(),
+    players: sortedPlayers()
+  };
+
+  session.sendMessage(NAMESPACE, payload)
+    .then(() => setHint("✅ Sender oppdateringer til TV", true))
+    .catch((err) => {
+      console.warn("sendMessage feilet:", err);
+      setHint("⚠️ Koblet, men kunne ikke sende data (sjekk namespace/receiver)", false);
+    });
+}
+
+// ======================
 // CRUD
-// ----------------------
+// ======================
 function addPlayer(name) {
   const clean = normalizeName(name);
   if (!clean) return;
@@ -121,98 +158,4 @@ function render() {
     if (btn.dataset.add) btn.onclick = () => changePoints(btn.dataset.add, +1);
     if (btn.dataset.add3) btn.onclick = () => changePoints(btn.dataset.add3, +3);
     if (btn.dataset.sub) btn.onclick = () => changePoints(btn.dataset.sub, -1);
-    if (btn.dataset.del) btn.onclick = () => removePlayer(btn.dataset.del);
-  });
-
-  // Hver gang vi rendrer, sender vi state til receiver hvis vi er koblet
-  sendStateToReceiver();
-}
-
-// ======================
-// CAST (Sender)
-// ======================
-function getCastSession() {
-  try {
-    return cast.framework.CastContext.getInstance().getCurrentSession();
-  } catch {
-    return null;
-  }
-}
-
-function setCastHint(text, ok) {
-  castHint.textContent = text;
-  castHint.classList.toggle("ok", !!ok);
-}
-
-function sendStateToReceiver() {
-  const session = getCastSession();
-  if (!session) {
-    setCastHint("🔄 Ikke tilkoblet Chromecast", false);
-    return;
-  }
-
-  const payload = {
-    type: "STATE",
-    updatedAt: Date.now(),
-    players: sortedPlayers()
-  };
-
-  session.sendMessage(NAMESPACE, payload)
-    .then(() => setCastHint("✅ Tilsynelatende tilkoblet – oppdaterer TV", true))
-    .catch(err => {
-      console.warn("sendMessage feilet:", err);
-      setCastHint("⚠️ Koblet, men kunne ikke sende data (sjekk namespace/receiver)", false);
-    });
-}
-
-// Cast init callback (kalles av cast_sender.js)
-window.__onGCastApiAvailable = function(isAvailable) {
-  if (!isAvailable) return;
-
-  const context = cast.framework.CastContext.getInstance();
-  context.setOptions({
-    receiverApplicationId: APP_ID,
-    autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
-  });
-
-  // 🔥 VIKTIG: tving cast-knappen synlig når SDK er klar
-  const castButton = document.querySelector("google-cast-launcher");
-  if (castButton) {
-    castButton.style.display = "block";
-  }
-};
-
-
-  const context = cast.framework.CastContext.getInstance();
-  context.setOptions({
-    receiverApplicationId: APP_ID,
-    autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
-  });
-
-  // Oppdater status når session endrer seg
-  context.addEventListener(
-    cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
-    () => sendStateToReceiver()
-  );
-
-  // Første status
-  sendStateToReceiver();
-};
-
-// ======================
-// UI EVENTS
-// ======================
-addBtn.onclick = () => {
-  addPlayer(nameInput.value);
-  nameInput.value = "";
-  nameInput.focus();
-};
-
-nameInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") addBtn.click();
-});
-
-resetBtn.onclick = resetAll;
-
-// Start
-render();
+    if (btn.d
