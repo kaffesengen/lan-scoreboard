@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="no">
 <head>
-  <meta name="google-cast-app-id" content="D6AC56C5">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="google-cast-app-id" content="D6AC56C5" />
   <title>LAN Scoreboard (Sender)</title>
   <link rel="stylesheet" href="style.css" />
 
@@ -12,10 +12,6 @@
 </head>
 
 <body>
-
-  <!-- Chromecast ikon/knapp (flyttet hit øverst i body) -->
-  <google-cast-launcher id="castButton"></google-cast-launcher>
-
   <div class="app">
     <header class="topbar">
       <div class="topbar-left">
@@ -24,7 +20,7 @@
       </div>
 
       <div class="topbar-right">
-        <!-- Chromecast ikon/knapp -->
+        <google-cast-launcher id="castButton" aria-label="Cast to Chromecast"></google-cast-launcher>
       </div>
     </header>
 
@@ -36,7 +32,7 @@
         <button id="resetBtn" class="danger">Reset</button>
       </div>
 
-      <div class="hint" id="castHint">🔄 Ikke tilkoblet Chromecast</div>
+      <div class="hint" id="castHint">🔄 Laster Cast…</div>
     </section>
 
     <section class="card">
