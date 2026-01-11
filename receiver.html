@@ -5,23 +5,24 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>LAN Scoreboard (Receiver)</title>
 
-  <!-- Bruk https eksplisitt -->
   <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
-
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
-  <!-- Debug/status som alltid synes -->
-  <div style="position:fixed;left:20px;top:20px;z-index:9999;
-              font-size:42px;font-weight:900;color:white;text-shadow:0 2px 10px rgba(0,0,0,.6);">
-    <div>LAN Receiver</div>
-    <div id="status">Starter…</div>
+  <!-- Winner overlay -->
+  <div class="winner-overlay" id="winnerOverlay">
+    <div class="winner-wrap">
+      <div class="winner-title">🏆 VINNERE 🏆</div>
+
+      <div class="winner-cards" id="winnerCards"></div>
+    </div>
   </div>
 
-  <!-- Din vanlige UI kan ligge under -->
+  <div class="sparkles" id="sparkles"></div>
+
   <div class="app">
-    <header class="topbar">
+    <header class="topbar glass">
       <div class="topbar-left">
         <h1>LAN Scoreboard</h1>
         <p id="status2">Venter på sender…</p>
@@ -29,17 +30,11 @@
     </header>
 
     <section class="card">
-      <h2>Topp 3</h2>
-      <div class="podium" id="podium"></div>
-    </section>
-
-    <section class="card">
-      <h2>Ranking</h2>
-      <div id="list" class="list"></div>
+      <h2>TOPP 9</h2>
+      <div class="grid9" id="grid"></div>
     </section>
   </div>
 
-  <!-- Ny fil (cache bust) -->
   <script src="receiver_v2.js"></script>
 </body>
 </html>
