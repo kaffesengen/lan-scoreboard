@@ -1,7 +1,7 @@
 // ======================
 // CONFIG
 // ======================
-const APP_ID = "D6AC56C5";
+const APP_ID = "088AB566";
 
 // Custom namespace for scoreboard state
 const NAMESPACE = "urn:x-cast:com.kaffesengen.lanscoreboard";
