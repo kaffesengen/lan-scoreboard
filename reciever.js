@@ -4,7 +4,7 @@ const statusEl = document.getElementById("status");
 const podiumEl = document.getElementById("podium");
 const listEl = document.getElementById("list");
 
-function escapeHtml(s) {
+function esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
   }[c]));
@@ -12,63 +12,21 @@ function escapeHtml(s) {
 
 function render(state) {
   const players = Array.isArray(state.players) ? state.players : [];
-  const time = state.updatedAt ? new Date(state.updatedAt).toLocaleTimeString() : "";
-  statusEl.textContent = players.length ? `Oppdatert: ${time}` : "Ingen spillere ennå";
+  statusEl.textContent = `Mottok data! Spillere: ${players.length}`;
 
-  // Podium 2-1-3
   const top3 = players.slice(0, 3);
-  const slots = [
-    { label: "2. plass", idx: 1 },
-    { label: "1. plass", idx: 0 },
-    { label: "3. plass", idx: 2 },
-  ];
+  podiumEl.innerHTML = top3.map((p, i) =>
+    `<div><b>#${i+1}</b> ${esc(p.name)} — ${p.points} pts</div>`
+  ).join("");
 
-  podiumEl.innerHTML = slots.map(s => {
-    const p = top3[s.idx];
-    if (!p) return `
-      <div class="podiumCard">
-        <div class="place">${s.label}</div>
-        <div class="podiumName">—</div>
-        <div class="podiumPoints">0 pts</div>
-      </div>`;
-    return `
-      <div class="podiumCard">
-        <div class="place">${s.label}</div>
-        <div class="podiumName">${escapeHtml(p.name)}</div>
-        <div class="podiumPoints">${p.points} pts</div>
-      </div>`;
-  }).join("");
-
-  listEl.innerHTML = players.map((p, idx) => `
-    <div class="row" style="grid-template-columns: 70px 1fr 110px 10px;">
-      <div class="rank">#${idx + 1}</div>
-      <div class="name">${escapeHtml(p.name)}</div>
-      <div class="points">${p.points} pts</div>
-      <div></div>
-    </div>
-  `).join("");
+  listEl.innerHTML = players.map((p, i) =>
+    `<div>#${i+1} ${esc(p.name)} — ${p.points} pts</div>`
+  ).join("");
 }
 
-// ---- CAF receiver ----
 const context = cast.framework.CastReceiverContext.getInstance();
 
-// Når receiver er klar: si "READY" til sender(e)
-function notifyReadyToAllSenders() {
-  const senders = context.getSenders ? context.getSenders() : [];
-  senders.forEach(s => {
-    context.sendCustomMessage(NAMESPACE, s.senderId, { type: "READY" });
-  });
-}
-
-// Når en sender kobler til: send READY
-context.addEventListener(
-  cast.framework.CastReceiverContextEventType.SENDER_CONNECTED,
-  (e) => {
-    context.sendCustomMessage(NAMESPACE, e.senderId, { type: "READY" });
-  }
-);
-
-// Når vi mottar state:
+// Lytt på custom messages fra sender
 context.addCustomMessageListener(NAMESPACE, (event) => {
   const data = event.data;
   if (!data || data.type !== "STATE") return;
@@ -76,7 +34,3 @@ context.addCustomMessageListener(NAMESPACE, (event) => {
 });
 
 context.start();
-
-// Si READY også etter start (i tilfelle sender allerede er koblet)
-setTimeout(notifyReadyToAllSenders, 0);
-setTimeout(notifyReadyToAllSenders, 300);
