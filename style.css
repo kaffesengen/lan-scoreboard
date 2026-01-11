@@ -94,20 +94,6 @@ button.remove{ background: rgba(255, 77, 109, 0.85); }
   background: rgba(56, 210, 122, 0.10);
 }
 
-.pill{
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
-  color: var(--muted);
-  font-weight: 800;
-}
-.pill.ok{
-  color: #caffdd;
-  border-color: rgba(56, 210, 122, 0.35);
-  background: rgba(56, 210, 122, 0.10);
-}
-
 .list{
   display:grid;
   gap:10px;
@@ -122,10 +108,6 @@ button.remove{ background: rgba(255, 77, 109, 0.85); }
   border: 1px solid rgba(255,255,255,0.10);
   border-radius: 18px;
   padding: 12px;
-}
-
-.receiverRow{
-  grid-template-columns: 70px 1fr 110px 10px;
 }
 
 .rank{
@@ -149,6 +131,30 @@ button.remove{ background: rgba(255, 77, 109, 0.85); }
   flex-wrap:wrap;
 }
 
+/* ✅ Cast-knapp – ser bra ut + riktig størrelse */
+google-cast-launcher{
+  display: block;
+  width: 38px;
+  height: 38px;
+  cursor: pointer;
+  background-color: rgba(255, 255, 255, 0.10);
+  border-radius: 10px;
+  padding: 5px;
+
+  --disconnected-color: white;
+  --connected-color: var(--accent);
+}
+
+google-cast-launcher:hover{
+  transform: scale(1.06);
+  background-color: rgba(255, 255, 255, 0.18);
+}
+
+google-cast-launcher:active{
+  transform: scale(0.96);
+}
+
+/* Receiver podium styling */
 .podium{
   display:grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -166,35 +172,3 @@ button.remove{ background: rgba(255, 77, 109, 0.85); }
 .place{ font-size: 13px; color: var(--muted); margin-bottom: 6px; font-weight: 800; }
 .podiumName{ font-size: 20px; font-weight: 950; }
 .podiumPoints{ margin-top: 6px; font-size: 14px; color: var(--muted); font-weight: 800; }
-
-/* ✅ Chromecast ikon/knapp: må ha størrelse for å synes */
-google-cast-launcher{
-  width: 44px;
-  height: 44px;
-  display: inline-block;
-  cursor: pointer;
-
-  /* valgfritt: farger */
-  --disconnected-color: #ffffff;
-  --connected-color: var(--accent);
-}
-
-google-cast-launcher {
-  display: block;
-  width: 38px;
-  height: 38px;
-  cursor: pointer;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  padding: 5px;
-
-  --disconnected-color: white;
-  --connected-color: var(--accent);
-}
-google-cast-launcher:hover {
-  transform: scale(1.1) rotate(15deg);
-  background-color: rgba(255, 255, 255, 0.2);
-}
-google-cast-launcher:active {
-  transform: scale(0.9) rotate(-10deg);
-}
