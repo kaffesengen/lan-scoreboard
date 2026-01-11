@@ -1,22 +1,13 @@
-// ======================
-// CONFIG
-// ======================
 const APP_ID = "D6AC56C5";
 const NAMESPACE = "urn:x-cast:com.kaffesengen.lanscoreboard";
-const STORAGE_KEY = "lan_scoreboard_cast_v2";
+const STORAGE_KEY = "lan_scoreboard_cast_v3";
 
-// ======================
-// UI
-// ======================
 const nameInput = document.getElementById("nameInput");
 const addBtn = document.getElementById("addBtn");
 const resetBtn = document.getElementById("resetBtn");
 const listEl = document.getElementById("list");
 const castHint = document.getElementById("castHint");
 
-// ======================
-// STATE
-// ======================
 let players = loadPlayers();
 
 function savePlayers() {
@@ -40,31 +31,34 @@ function escapeHtml(s) {
   }[c]));
 }
 function sortedPlayers() {
-  return [...players].sort((a, b) => {
-    if (b.points !== a.points) return b.points - a.points;
-    return a.name.localeCompare(b.name);
-  });
-}
-
-// ======================
-// CAST BUTTON VISIBILITY (robust)
-// ======================
-function getCastButtonEl() {
-  return document.getElementById("castButton") || document.querySelector("google-cast-launcher");
-}
-
-function forceShowCastButton() {
-  const el = getCastButtonEl();
-  if (!el) return;
-  // Cast SDK kan sette inline style="display:none". Vi overstyrer til block.
-  el.style.display = "block";
-  el.style.width = "38px";
-  el.style.height = "38px";
+  return [...players].sort((a, b) => (b.points - a.points) || a.name.localeCompare(b.name));
 }
 
 function setHint(text, ok) {
   castHint.textContent = text;
   castHint.classList.toggle("ok", !!ok);
+}
+
+/**
+ * ✅ Dette er “trikset”: Cast SDK kan sette display:none.
+ * Vi observerer knappen og sørger for at den alltid er synlig.
+ */
+function protectCastButtonVisibility() {
+  const el = document.querySelector("google-cast-launcher");
+  if (!el) return;
+
+  const show = () => { el.style.display = "block"; };
+
+  // Vis med en gang
+  show();
+
+  // Hvis Cast SDK endrer style-attributten, sett den tilbake
+  const obs = new MutationObserver(() => show());
+  obs.observe(el, { attributes: true, attributeFilter: ["style"] });
+
+  // Ekstra: sikre størrelse (i tilfelle noe overskriver)
+  el.style.width = "38px";
+  el.style.height = "38px";
 }
 
 function getSession() {
@@ -78,7 +72,7 @@ function getSession() {
 function sendStateToReceiver() {
   const session = getSession();
   if (!session) {
-    setHint("🔄 Ikke tilkoblet Chromecast", false);
+    setHint("Klar for oppkobling (trykk Cast-ikonet)", false);
     return;
   }
 
@@ -90,15 +84,10 @@ function sendStateToReceiver() {
 
   session.sendMessage(NAMESPACE, payload)
     .then(() => setHint("✅ Sender oppdateringer til TV", true))
-    .catch((err) => {
-      console.warn("sendMessage feilet:", err);
-      setHint("⚠️ Koblet, men kunne ikke sende data (sjekk namespace/receiver)", false);
-    });
+    .catch(() => setHint("⚠️ Koblet, men kunne ikke sende data (sjekk receiver/namespace)", false));
 }
 
-// ======================
-// CRUD
-// ======================
+// ---- UI actions ----
 function addPlayer(name) {
   const clean = normalizeName(name);
   if (!clean) return;
@@ -134,9 +123,6 @@ function resetAll() {
   render();
 }
 
-// ======================
-// RENDER
-// ======================
 function render() {
   const sorted = sortedPlayers();
 
@@ -164,68 +150,39 @@ function render() {
   sendStateToReceiver();
 }
 
-// ======================
-// CAST INIT
-// ======================
-window.__onGCastApiAvailable = function(isAvailable) {
-  console.log("__onGCastApiAvailable:", isAvailable);
-
-  if (!isAvailable) {
+// ---- Cast init (samme stil som countdown-appen din) ----
+window.__onGCastApiAvailable = (available) => {
+  if (!available) {
     setHint("⚠️ Cast API ikke tilgjengelig (bruk Chrome)", false);
     return;
   }
 
-  const context = cast.framework.CastContext.getInstance();
-  context.setOptions({
+  // 1) Beskytt knappen først (så den ikke blir skjult)
+  protectCastButtonVisibility();
+
+  // 2) Cast options (som i countdown-appen)
+  cast.framework.CastContext.getInstance().setOptions({
     receiverApplicationId: APP_ID,
     autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
   });
 
-  // Cast SDK kan skjule knappen tidlig. Vi tvinger den synlig.
-  forceShowCastButton();
-  setTimeout(forceShowCastButton, 0);
-  setTimeout(forceShowCastButton, 200);
-  setTimeout(forceShowCastButton, 800);
-  setTimeout(forceShowCastButton, 1500);
-
-  // Når castState endrer seg (f.eks. finner enheter), vis knappen igjen.
-  context.addEventListener(
-    cast.framework.CastContextEventType.CAST_STATE_CHANGED,
-    (e) => {
-      console.log("CAST_STATE_CHANGED:", e.castState);
-      // Vis når det ikke er "ingen enheter"
-      if (e.castState !== cast.framework.CastState.NO_DEVICES_AVAILABLE) {
-        forceShowCastButton();
-      }
-    }
-  );
-
-  // Når session endrer seg, vis knappen igjen + send state
-  context.addEventListener(
+  // 3) Oppdater hint når session endrer seg
+  const ctx = cast.framework.CastContext.getInstance();
+  ctx.addEventListener(
     cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
-    (e) => {
-      console.log("SESSION_STATE_CHANGED:", e.sessionState);
-      forceShowCastButton();
-      sendStateToReceiver();
-    }
+    () => sendStateToReceiver()
   );
 
-  setHint("🔄 Klar. Trykk Cast-ikonet for å koble til TV.", false);
+  setHint("Klar for oppkobling (trykk Cast-ikonet)", false);
 };
 
-// ======================
-// UI EVENTS
-// ======================
+// Events
 addBtn.onclick = () => {
   addPlayer(nameInput.value);
   nameInput.value = "";
   nameInput.focus();
 };
-
-nameInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") addBtn.click();
-});
-
+nameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") addBtn.click(); });
 resetBtn.onclick = resetAll;
 
 // Start
