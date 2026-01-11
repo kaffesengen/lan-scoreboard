@@ -158,4 +158,75 @@ function render() {
     if (btn.dataset.add) btn.onclick = () => changePoints(btn.dataset.add, +1);
     if (btn.dataset.add3) btn.onclick = () => changePoints(btn.dataset.add3, +3);
     if (btn.dataset.sub) btn.onclick = () => changePoints(btn.dataset.sub, -1);
-    if (btn.d
+    if (btn.dataset.del) btn.onclick = () => removePlayer(btn.dataset.del);
+  });
+
+  sendStateToReceiver();
+}
+
+// ======================
+// CAST INIT
+// ======================
+window.__onGCastApiAvailable = function(isAvailable) {
+  console.log("__onGCastApiAvailable:", isAvailable);
+
+  if (!isAvailable) {
+    setHint("⚠️ Cast API ikke tilgjengelig (bruk Chrome)", false);
+    return;
+  }
+
+  const context = cast.framework.CastContext.getInstance();
+  context.setOptions({
+    receiverApplicationId: APP_ID,
+    autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+  });
+
+  // Cast SDK kan skjule knappen tidlig. Vi tvinger den synlig.
+  forceShowCastButton();
+  setTimeout(forceShowCastButton, 0);
+  setTimeout(forceShowCastButton, 200);
+  setTimeout(forceShowCastButton, 800);
+  setTimeout(forceShowCastButton, 1500);
+
+  // Når castState endrer seg (f.eks. finner enheter), vis knappen igjen.
+  context.addEventListener(
+    cast.framework.CastContextEventType.CAST_STATE_CHANGED,
+    (e) => {
+      console.log("CAST_STATE_CHANGED:", e.castState);
+      // Vis når det ikke er "ingen enheter"
+      if (e.castState !== cast.framework.CastState.NO_DEVICES_AVAILABLE) {
+        forceShowCastButton();
+      }
+    }
+  );
+
+  // Når session endrer seg, vis knappen igjen + send state
+  context.addEventListener(
+    cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
+    (e) => {
+      console.log("SESSION_STATE_CHANGED:", e.sessionState);
+      forceShowCastButton();
+      sendStateToReceiver();
+    }
+  );
+
+  setHint("🔄 Klar. Trykk Cast-ikonet for å koble til TV.", false);
+};
+
+// ======================
+// UI EVENTS
+// ======================
+addBtn.onclick = () => {
+  addPlayer(nameInput.value);
+  nameInput.value = "";
+  nameInput.focus();
+};
+
+nameInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") addBtn.click();
+});
+
+resetBtn.onclick = resetAll;
+
+// Start
+render();
