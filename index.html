@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LAN Scoreboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>LAN Scoreboard</h1>
+      <p>Add players, give points, and watch the ranking update.</p>
+    </header>
+
+    <section class="controls">
+      <input id="nameInput" placeholder="Username..." maxlength="16" />
+      <button id="addBtn">Add</button>
+      <button id="resetBtn" class="danger">Reset</button>
+    </section>
+
+    <section class="podium" id="podium"></section>
+
+    <section>
+      <h2>Ranking</h2>
+      <div id="list" class="list"></div>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
