@@ -5,31 +5,41 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>LAN Scoreboard (Receiver)</title>
 
-  <!-- CAF Receiver SDK (MÅ være med for custom receiver) -->
-  <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+  <!-- Bruk https eksplisitt -->
+  <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
 
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
-  
-  <!-- Stort midlertidig statusfelt -->
-  <div style="font-size:40px;font-weight:900;color:white;padding:40px;">
-  <div>LAN Receiver</div>
-  <div id="status">Starter…</div>
+  <!-- Debug/status som alltid synes -->
+  <div style="position:fixed;left:20px;top:20px;z-index:9999;
+              font-size:42px;font-weight:900;color:white;text-shadow:0 2px 10px rgba(0,0,0,.6);">
+    <div>LAN Receiver</div>
+    <div id="status">Starter…</div>
   </div>
 
+  <!-- Din vanlige UI kan ligge under -->
   <div class="app">
-    <h1>LAN Scoreboard</h1>
-    <p id="status">Venter på sender…</p>
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1>LAN Scoreboard</h1>
+        <p id="status2">Venter på sender…</p>
+      </div>
+    </header>
 
-    <h2>Topp 3</h2>
-    <div id="podium"></div>
+    <section class="card">
+      <h2>Topp 3</h2>
+      <div class="podium" id="podium"></div>
+    </section>
 
-    <h2>Ranking</h2>
-    <div id="list"></div>
+    <section class="card">
+      <h2>Ranking</h2>
+      <div id="list" class="list"></div>
+    </section>
   </div>
 
-  <script src="receiver.js"></script>
+  <!-- Ny fil (cache bust) -->
+  <script src="receiver_v2.js"></script>
 </body>
 </html>
