@@ -71,22 +71,23 @@ function attachMessageListeners(session) {
   session.__lanListenersAttached = true;
 
   session.addMessageListener(NAMESPACE, (_ns, message) => {
-    console.log("[SENDER] msg from receiver:", message);
+  // ✅ Noen ganger kommer meldingen som JSON-string
+  let msg = message;
+  if (typeof message === "string") {
+    try { msg = JSON.parse(message); } catch { /* ignore */ }
+  }
 
-    if (message && (message.type === "READY" || message.type === "PONG")) {
-      receiverReady = true;
-      setHint("✅ Receiver klar – sender oppdateringer", true);
+  console.log("[SENDER] msg from receiver (raw):", message);
+  console.log("[SENDER] msg from receiver (parsed):", msg);
 
-      // send state med en gang
-      sendStateToReceiver();
-      return;
-    }
+  if (msg && (msg.type === "READY" || msg.type === "PONG")) {
+    receiverReady = true;
+    setHint("✅ Receiver klar – sender oppdateringer", true);
+    sendStateToReceiver();
+    return;
+  }
+});
 
-    if (message && message.type === "PONG") {
-      // valgfritt: kan brukes til debug
-      return;
-    }
-  });
 }
 
 function startPing() {
