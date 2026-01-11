@@ -167,10 +167,21 @@ function sendStateToReceiver() {
 
 // Cast init callback (kalles av cast_sender.js)
 window.__onGCastApiAvailable = function(isAvailable) {
-  if (!isAvailable) {
-    setCastHint("⚠️ Cast API ikke tilgjengelig (kjør i Chrome)", false);
-    return;
+  if (!isAvailable) return;
+
+  const context = cast.framework.CastContext.getInstance();
+  context.setOptions({
+    receiverApplicationId: APP_ID,
+    autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+  });
+
+  // 🔥 VIKTIG: tving cast-knappen synlig når SDK er klar
+  const castButton = document.querySelector("google-cast-launcher");
+  if (castButton) {
+    castButton.style.display = "block";
   }
+};
+
 
   const context = cast.framework.CastContext.getInstance();
   context.setOptions({
