@@ -23,14 +23,15 @@ window.onerror = function (message) {
 
 setStatus("JS lastet ✅");
 
-// Start CAF receiver
+// CAF
 setStatus("CAF init…");
 const context = cast.framework.CastReceiverContext.getInstance();
 
-// 🚀 Viktig: hindrer at receiveren lukkes pga idle
+// Disable idle timeout (hindrer at den lukkes)
 const options = new cast.framework.CastReceiverOptions();
 options.disableIdleTimeout = true;
 
+// Send READY til en sender
 function sendReady(senderId) {
   try {
     context.sendCustomMessage(NAMESPACE, senderId, { type: "READY", t: Date.now() });
@@ -39,21 +40,24 @@ function sendReady(senderId) {
   }
 }
 
-context.addEventListener(
-  cast.framework.CastReceiverContextEventType.SENDER_CONNECTED,
-  (e) => {
-    setStatus("👤 Sender tilkoblet ✅");
-    sendReady(e.senderId);
-  }
-);
+// ✅ Ikke bruk CastReceiverContextEventType (var undefined hos deg).
+// Bruk streng-eventnavn som alltid fungerer:
+context.addEventListener("senderconnected", (e) => {
+  setStatus("👤 Sender tilkoblet ✅");
+  sendReady(e.senderId);
+});
 
+context.addEventListener("senderdisconnected", (e) => {
+  setStatus("👤 Sender frakoblet");
+});
+
+// Meldinger fra sender
 context.addCustomMessageListener(NAMESPACE, (event) => {
   const data = event.data;
-
   if (!data || !data.type) return;
 
   if (data.type === "PING") {
-    // valgfritt svar:
+    // Hold liv + (valgfritt) svar
     context.sendCustomMessage(NAMESPACE, event.senderId, { type: "PONG", t: Date.now() });
     return;
   }
@@ -68,24 +72,27 @@ context.addCustomMessageListener(NAMESPACE, (event) => {
 function render(state) {
   const players = Array.isArray(state.players) ? state.players : [];
 
-  // enkel topp3
   const top3 = players.slice(0, 3);
-  podiumEl.innerHTML = top3.map((p, i) => `
-    <div class="podiumCard">
-      <div class="place">#${i+1}</div>
-      <div class="podiumName">${esc(p.name)}</div>
-      <div class="podiumPoints">${p.points} pts</div>
-    </div>
-  `).join("");
+  if (podiumEl) {
+    podiumEl.innerHTML = top3.map((p, i) => `
+      <div class="podiumCard">
+        <div class="place">#${i + 1}</div>
+        <div class="podiumName">${esc(p.name)}</div>
+        <div class="podiumPoints">${p.points} pts</div>
+      </div>
+    `).join("");
+  }
 
-  listEl.innerHTML = players.map((p, i) => `
-    <div class="row" style="grid-template-columns: 70px 1fr 110px 10px;">
-      <div class="rank">#${i+1}</div>
-      <div class="name">${esc(p.name)}</div>
-      <div class="points">${p.points} pts</div>
-      <div></div>
-    </div>
-  `).join("");
+  if (listEl) {
+    listEl.innerHTML = players.map((p, i) => `
+      <div class="row" style="grid-template-columns: 70px 1fr 110px 10px;">
+        <div class="rank">#${i + 1}</div>
+        <div class="name">${esc(p.name)}</div>
+        <div class="points">${p.points} pts</div>
+        <div></div>
+      </div>
+    `).join("");
+  }
 }
 
 setStatus("CAF start()…");
