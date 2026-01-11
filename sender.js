@@ -1,6 +1,6 @@
 const APP_ID = "D6AC56C5";
 const NAMESPACE = "urn:x-cast:com.kaffesengen.lanscoreboard";
-const STORAGE_KEY = "lan_scoreboard_cast_ready_v1";
+const STORAGE_KEY = "lan_scoreboard_state_v6";
 
 const nameInput = document.getElementById("nameInput");
 const addBtn = document.getElementById("addBtn");
@@ -10,12 +10,12 @@ const castHint = document.getElementById("castHint");
 
 let players = loadPlayers();
 let receiverReady = false;
+let pingTimer = null;
 
-// ---------- helpers ----------
+// ---------------- storage ----------------
 function savePlayers() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(players));
 }
-
 function loadPlayers() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -25,25 +25,24 @@ function loadPlayers() {
   }
 }
 
+// ---------------- helpers ----------------
 function normalizeName(name) {
   return name.trim().replace(/\s+/g, " ");
 }
-
 function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  return String(s).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
   }[c]));
 }
-
 function sortedPlayers() {
   return [...players].sort((a, b) => (b.points - a.points) || a.name.localeCompare(b.name));
 }
-
 function setHint(text, ok) {
   castHint.textContent = text;
   castHint.classList.toggle("ok", !!ok);
 }
 
+// Keep cast button visible
 function protectCastButtonVisibility() {
   const el = document.querySelector("google-cast-launcher");
   if (!el) return;
@@ -51,28 +50,56 @@ function protectCastButtonVisibility() {
   show();
   const obs = new MutationObserver(show);
   obs.observe(el, { attributes: true, attributeFilter: ["style"] });
+  el.style.width = "38px";
+  el.style.height = "38px";
 }
 
+// ---------------- cast session ----------------
 function getContext() {
   return cast.framework.CastContext.getInstance();
 }
-
 function getSession() {
   try { return getContext().getCurrentSession(); } catch { return null; }
 }
 
-// ---------- cast messaging ----------
-function attachReceiverReadyListener(session) {
+// Lytt på READY/PONG fra receiver
+function attachMessageListeners(session) {
   if (!session) return;
 
-  // Når receiver sier READY -> da kan vi sende STATE uten invalid_parameter
+  // Unngå å legge til flere listeners (enkelt “flag”)
+  if (session.__lanListenersAttached) return;
+  session.__lanListenersAttached = true;
+
   session.addMessageListener(NAMESPACE, (_ns, message) => {
+    console.log("[SENDER] msg from receiver:", message);
+
     if (message && message.type === "READY") {
       receiverReady = true;
       setHint("✅ Receiver klar – sender oppdateringer", true);
+
+      // send state med en gang
       sendStateToReceiver();
+      return;
+    }
+
+    if (message && message.type === "PONG") {
+      // valgfritt: kan brukes til debug
+      return;
     }
   });
+}
+
+function startPing() {
+  stopPing();
+  pingTimer = setInterval(() => {
+    const session = getSession();
+    if (!session) return;
+    session.sendMessage(NAMESPACE, { type: "PING", t: Date.now() }).catch(() => {});
+  }, 2500);
+}
+function stopPing() {
+  if (pingTimer) clearInterval(pingTimer);
+  pingTimer = null;
 }
 
 function sendStateToReceiver() {
@@ -82,6 +109,7 @@ function sendStateToReceiver() {
     return;
   }
 
+  // viktig: vent til READY
   if (!receiverReady) {
     setHint("🔄 Koblet – venter på receiver…", false);
     return;
@@ -93,21 +121,21 @@ function sendStateToReceiver() {
     players: sortedPlayers()
   };
 
+  console.log("[SENDER] sending STATE:", payload);
+
   session.sendMessage(NAMESPACE, payload)
-    .then(() => setHint("✅ Sender oppdateringer til TV", true))
+    .then(() => {
+      setHint("✅ Sender oppdateringer til TV", true);
+    })
     .catch((err) => {
-      console.warn("sendMessage feilet:", err);
-
-      // Hvis receiveren restartet, kan vi bli "ikke-ready" igjen.
+      console.warn("[SENDER] sendMessage failed:", err);
+      // Hvis receiveren restartet, mister vi READY-status
       receiverReady = false;
-      setHint("🔄 Venter på receiver…", false);
-
-      // Prøv igjen litt senere
-      setTimeout(sendStateToReceiver, 500);
+      setHint("🔄 Receiver restartet? Venter på receiver…", false);
     });
 }
 
-// ---------- UI actions ----------
+// ---------------- UI actions ----------------
 function addPlayer(name) {
   const clean = normalizeName(name);
   if (!clean) return;
@@ -167,12 +195,13 @@ function render() {
     if (btn.dataset.del) btn.onclick = () => removePlayer(btn.dataset.del);
   });
 
-  // prøv å sende hvis vi kan
+  // send oppdatering hver gang UI endres
   sendStateToReceiver();
 }
 
-// ---------- Cast init ----------
+// ---------------- Cast init ----------------
 window.__onGCastApiAvailable = (available) => {
+  console.log("__onGCastApiAvailable:", available);
   if (!available) {
     setHint("⚠️ Cast API ikke tilgjengelig (bruk Chrome)", false);
     return;
@@ -183,7 +212,8 @@ window.__onGCastApiAvailable = (available) => {
   const ctx = getContext();
   ctx.setOptions({
     receiverApplicationId: APP_ID,
-    autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+    // viktig: for å unngå å auto-join’e countdown-sessionen
+    autoJoinPolicy: chrome.cast.AutoJoinPolicy.PAGE_SCOPED
   });
 
   ctx.addEventListener(
@@ -199,14 +229,16 @@ window.__onGCastApiAvailable = (available) => {
         receiverReady = false;
         setHint("🔄 Koblet – venter på receiver…", false);
 
-        attachReceiverReadyListener(session);
+        attachMessageListeners(session);
+        startPing();
 
-        // Fallback: hvis READY ikke kommer (f.eks. receiver.js feil), prøv å sende litt senere.
+        // Gi receiver litt tid til å sende READY
         setTimeout(sendStateToReceiver, 800);
       }
 
       if (e.sessionState === cast.framework.SessionState.SESSION_ENDED) {
         receiverReady = false;
+        stopPing();
         setHint("🔄 Ikke tilkoblet Chromecast", false);
       }
     }
@@ -215,17 +247,16 @@ window.__onGCastApiAvailable = (available) => {
   setHint("Klar. Trykk Cast-ikonet for å velge TV.", false);
 };
 
-// ---------- wire UI ----------
+// ---------------- wire UI ----------------
 addBtn.onclick = () => {
   addPlayer(nameInput.value);
   nameInput.value = "";
   nameInput.focus();
 };
-
 nameInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") addBtn.click();
 });
-
 resetBtn.onclick = resetAll;
 
+// Start
 render();
