@@ -23,46 +23,60 @@ window.onerror = function (message) {
 
 setStatus("JS lastet ✅");
 
-// CAF
-setStatus("CAF init…");
 const context = cast.framework.CastReceiverContext.getInstance();
-
-// Disable idle timeout (hindrer at den lukkes)
 const options = new cast.framework.CastReceiverOptions();
 options.disableIdleTimeout = true;
 
-// Send READY til en sender
-function sendReady(senderId) {
+// Hold styr på sendere som er koblet til
+const senders = new Set();
+
+function sendTo(senderId, msg) {
   try {
-    context.sendCustomMessage(NAMESPACE, senderId, { type: "READY", t: Date.now() });
+    context.sendCustomMessage(NAMESPACE, senderId, msg);
   } catch (e) {
-    console.warn("sendReady failed:", e);
+    console.warn("sendCustomMessage failed:", e);
   }
 }
 
-// ✅ Ikke bruk CastReceiverContextEventType (var undefined hos deg).
-// Bruk streng-eventnavn som alltid fungerer:
+function sendReady(senderId) {
+  sendTo(senderId, { type: "READY", t: Date.now() });
+}
+
+function broadcastReady() {
+  for (const id of senders) sendReady(id);
+}
+
+// Event strings (fungerer hos deg)
 context.addEventListener("senderconnected", (e) => {
+  senders.add(e.senderId);
   setStatus("👤 Sender tilkoblet ✅");
   sendReady(e.senderId);
 });
 
 context.addEventListener("senderdisconnected", (e) => {
+  senders.delete(e.senderId);
   setStatus("👤 Sender frakoblet");
 });
 
 // Meldinger fra sender
 context.addCustomMessageListener(NAMESPACE, (event) => {
   const data = event.data;
-  if (!data || !data.type) return;
 
-  if (data.type === "PING") {
-    // Hold liv + (valgfritt) svar
-    context.sendCustomMessage(NAMESPACE, event.senderId, { type: "PONG", t: Date.now() });
+  // Håndtrykk: hvis sender sier HELLO/PING, svar READY hver gang
+  if (data?.type === "HELLO") {
+    setStatus("✅ HELLO mottatt – sender READY");
+    sendReady(event.senderId);
     return;
   }
 
-  if (data.type === "STATE") {
+  if (data?.type === "PING") {
+    // Svar både PONG og READY (så sender alltid blir “ready”)
+    sendTo(event.senderId, { type: "PONG", t: Date.now() });
+    sendReady(event.senderId);
+    return;
+  }
+
+  if (data?.type === "STATE") {
     setStatus("✅ STATE mottatt (" + (data.players?.length || 0) + " spillere)");
     render(data);
     return;
@@ -98,3 +112,8 @@ function render(state) {
 setStatus("CAF start()…");
 context.start(options);
 setStatus("CAF startet ✅ (venter på sender)");
+
+// Broadcast READY noen ganger etter start (i tilfelle timing)
+setTimeout(broadcastReady, 300);
+setTimeout(broadcastReady, 1000);
+setTimeout(broadcastReady, 2500);
