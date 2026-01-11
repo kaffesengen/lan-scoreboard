@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="google-cast-app-id" content="D6AC56C5" />
   <title>LAN Scoreboard (Sender)</title>
-  <link rel="stylesheet" href="style.css" />
 
-  <!-- Google Cast Web Sender SDK (Cast Framework) -->
+  <!-- Cast SDK (samme som i countdown-appen din) -->
   <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
+
+  <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
@@ -20,7 +20,7 @@
       </div>
 
       <div class="topbar-right">
-        <google-cast-launcher id="castButton" aria-label="Cast to Chromecast"></google-cast-launcher>
+        <google-cast-launcher></google-cast-launcher>
       </div>
     </header>
 
@@ -32,7 +32,7 @@
         <button id="resetBtn" class="danger">Reset</button>
       </div>
 
-      <div class="hint" id="castHint">🔄 Laster Cast…</div>
+      <div class="hint" id="castHint">Klar for oppkobling</div>
     </section>
 
     <section class="card">
