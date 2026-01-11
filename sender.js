@@ -73,7 +73,7 @@ function attachMessageListeners(session) {
   session.addMessageListener(NAMESPACE, (_ns, message) => {
     console.log("[SENDER] msg from receiver:", message);
 
-    if (message && message.type === "READY") {
+    if (message && (message.type === "READY" || message.type === "PONG")) {
       receiverReady = true;
       setHint("✅ Receiver klar – sender oppdateringer", true);
 
@@ -230,6 +230,10 @@ window.__onGCastApiAvailable = (available) => {
         setHint("🔄 Koblet – venter på receiver…", false);
 
         attachMessageListeners(session);
+
+        // ✅ NY: Be receiveren sende READY (så vi ikke misser den pga timing)
+        session.sendMessage(NAMESPACE, { type: "HELLO", t: Date.now() }).catch(()=>{});
+        
         startPing();
 
         // Gi receiver litt tid til å sende READY
