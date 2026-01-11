@@ -5,7 +5,7 @@ const podiumEl = document.getElementById("podium");
 const listEl = document.getElementById("list");
 
 function escapeHtml(s) {
-  return s.replace(/[&<>"']/g, c => ({
+  return String(s).replace(/[&<>"']/g, c => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
   }[c]));
 }
@@ -15,6 +15,7 @@ function render(state) {
   const time = state.updatedAt ? new Date(state.updatedAt).toLocaleTimeString() : "";
   statusEl.textContent = players.length ? `Oppdatert: ${time}` : "Ingen spillere ennå";
 
+  // Podium 2-1-3
   const top3 = players.slice(0, 3);
   const slots = [
     { label: "2. plass", idx: 1 },
@@ -48,10 +49,34 @@ function render(state) {
   `).join("");
 }
 
+// ---- CAF receiver ----
 const context = cast.framework.CastReceiverContext.getInstance();
+
+// Når receiver er klar: si "READY" til sender(e)
+function notifyReadyToAllSenders() {
+  const senders = context.getSenders ? context.getSenders() : [];
+  senders.forEach(s => {
+    context.sendCustomMessage(NAMESPACE, s.senderId, { type: "READY" });
+  });
+}
+
+// Når en sender kobler til: send READY
+context.addEventListener(
+  cast.framework.CastReceiverContextEventType.SENDER_CONNECTED,
+  (e) => {
+    context.sendCustomMessage(NAMESPACE, e.senderId, { type: "READY" });
+  }
+);
+
+// Når vi mottar state:
 context.addCustomMessageListener(NAMESPACE, (event) => {
   const data = event.data;
   if (!data || data.type !== "STATE") return;
   render(data);
 });
+
 context.start();
+
+// Si READY også etter start (i tilfelle sender allerede er koblet)
+setTimeout(notifyReadyToAllSenders, 0);
+setTimeout(notifyReadyToAllSenders, 300);
