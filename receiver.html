@@ -4,30 +4,23 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>LAN Scoreboard (Receiver)</title>
-  <link rel="stylesheet" href="style.css" />
 
-  <!-- CAF Receiver SDK -->
+  <!-- CAF Receiver SDK (MÅ være med for custom receiver) -->
   <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+
+  <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
   <div class="app">
-    <header class="topbar">
-      <div class="topbar-left">
-        <h1>LAN Scoreboard</h1>
-        <p id="status">Venter på sender…</p>
-      </div>
-    </header>
+    <h1>LAN Scoreboard</h1>
+    <p id="status">Venter på sender…</p>
 
-    <section class="card">
-      <h2>Topp 3</h2>
-      <div class="podium" id="podium"></div>
-    </section>
+    <h2>Topp 3</h2>
+    <div id="podium"></div>
 
-    <section class="card">
-      <h2>Ranking</h2>
-      <div id="list" class="list"></div>
-    </section>
+    <h2>Ranking</h2>
+    <div id="list"></div>
   </div>
 
   <script src="receiver.js"></script>
