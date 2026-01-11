@@ -1,0 +1,139 @@
+:root {
+  --bg: #0b1020;
+  --card: #121a33;
+  --text: #e9eeff;
+  --muted: #aab6ff;
+  --accent: #7c5cff;
+  --danger: #ff4d6d;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: system-ui, Arial, sans-serif;
+  background: radial-gradient(1000px 600px at 20% 10%, #1b2a6b 0%, var(--bg) 60%);
+  color: var(--text);
+}
+
+.app {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 18px;
+}
+
+header {
+  background: rgba(18, 26, 51, 0.75);
+  border: 1px solid rgba(124, 92, 255, 0.25);
+  border-radius: 18px;
+  padding: 16px;
+  backdrop-filter: blur(6px);
+}
+
+header h1 { margin: 0 0 6px; }
+header p { margin: 0; color: var(--muted); }
+
+.controls {
+  display: flex;
+  gap: 10px;
+  margin: 14px 0 18px;
+}
+
+input {
+  flex: 1;
+  padding: 12px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(18, 26, 51, 0.8);
+  color: var(--text);
+  outline: none;
+}
+
+button {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 0;
+  cursor: pointer;
+  background: var(--accent);
+  color: white;
+  font-weight: 700;
+}
+
+button.danger { background: var(--danger); }
+
+.podium {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.podiumCard {
+  background: rgba(18, 26, 51, 0.85);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 18px;
+  padding: 14px;
+  text-align: center;
+}
+
+.podiumCard .place {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.podiumCard .name {
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.podiumCard .points {
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 60px 1fr 110px 180px;
+  gap: 10px;
+  align-items: center;
+  background: rgba(18, 26, 51, 0.85);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 18px;
+  padding: 12px;
+}
+
+.badge {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: rgba(124, 92, 255, 0.25);
+  border: 1px solid rgba(124, 92, 255, 0.35);
+  font-weight: 900;
+  font-size: 16px;
+}
+
+.nameCell { font-weight: 900; }
+.pointsCell { color: var(--muted); font-weight: 700; }
+
+.actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.actions button {
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-weight: 900;
+}
+
+.small { background: rgba(255,255,255,0.10); }
+.remove { background: rgba(255, 77, 109, 0.85); }
