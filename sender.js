@@ -1,10 +1,11 @@
 const APP_ID = "D6AC56C5";
 const NAMESPACE = "urn:x-cast:com.kaffesengen.lanscoreboard";
-const STORAGE_KEY = "lan_scoreboard_state_v6";
+const STORAGE_KEY = "lan_scoreboard_state_v7";
 
 const nameInput = document.getElementById("nameInput");
 const addBtn = document.getElementById("addBtn");
 const resetBtn = document.getElementById("resetBtn");
+const finishBtn = document.getElementById("finishBtn");
 const listEl = document.getElementById("list");
 const castHint = document.getElementById("castHint");
 
@@ -50,8 +51,38 @@ function protectCastButtonVisibility() {
   show();
   const obs = new MutationObserver(show);
   obs.observe(el, { attributes: true, attributeFilter: ["style"] });
-  el.style.width = "38px";
-  el.style.height = "38px";
+  el.style.width = "40px";
+  el.style.height = "40px";
+}
+
+// ---------------- FLIP animation for reordering ----------------
+function animateReorder(container) {
+  const children = Array.from(container.children);
+  const first = new Map();
+  children.forEach(el => first.set(el.dataset.key, el.getBoundingClientRect()));
+
+  // after DOM update will call this again; so we return a function to run after update
+  return () => {
+    const newChildren = Array.from(container.children);
+    newChildren.forEach(el => {
+      const key = el.dataset.key;
+      const f = first.get(key);
+      if (!f) return;
+
+      const last = el.getBoundingClientRect();
+      const dx = f.left - last.left;
+      const dy = f.top - last.top;
+      if (dx === 0 && dy === 0) return;
+
+      el.animate(
+        [
+          { transform: `translate(${dx}px, ${dy}px)` },
+          { transform: "translate(0px, 0px)" }
+        ],
+        { duration: 420, easing: "cubic-bezier(.2,.9,.1,1)" }
+      );
+    });
+  };
 }
 
 // ---------------- cast session ----------------
@@ -62,32 +93,24 @@ function getSession() {
   try { return getContext().getCurrentSession(); } catch { return null; }
 }
 
-// Lytt på READY/PONG fra receiver
+// message listener (parse string JSON)
 function attachMessageListeners(session) {
-  if (!session) return;
-
-  // Unngå å legge til flere listeners (enkelt “flag”)
-  if (session.__lanListenersAttached) return;
+  if (!session || session.__lanListenersAttached) return;
   session.__lanListenersAttached = true;
 
   session.addMessageListener(NAMESPACE, (_ns, message) => {
-  // ✅ Noen ganger kommer meldingen som JSON-string
-  let msg = message;
-  if (typeof message === "string") {
-    try { msg = JSON.parse(message); } catch { /* ignore */ }
-  }
+    let msg = message;
+    if (typeof message === "string") {
+      try { msg = JSON.parse(message); } catch {}
+    }
 
-  console.log("[SENDER] msg from receiver (raw):", message);
-  console.log("[SENDER] msg from receiver (parsed):", msg);
-
-  if (msg && (msg.type === "READY" || msg.type === "PONG")) {
-    receiverReady = true;
-    setHint("✅ Receiver klar – sender oppdateringer", true);
-    sendStateToReceiver();
-    return;
-  }
-});
-
+    if (msg && (msg.type === "READY" || msg.type === "PONG")) {
+      receiverReady = true;
+      setHint("✅ Receiver klar – sender oppdateringer", true);
+      sendStateToReceiver();
+      return;
+    }
+  });
 }
 
 function startPing() {
@@ -95,7 +118,7 @@ function startPing() {
   pingTimer = setInterval(() => {
     const session = getSession();
     if (!session) return;
-    session.sendMessage(NAMESPACE, { type: "PING", t: Date.now() }).catch(() => {});
+    session.sendMessage(NAMESPACE, { type: "PING", t: Date.now() }).catch(()=>{});
   }, 2500);
 }
 function stopPing() {
@@ -109,8 +132,6 @@ function sendStateToReceiver() {
     setHint("🔄 Ikke tilkoblet Chromecast", false);
     return;
   }
-
-  // viktig: vent til READY
   if (!receiverReady) {
     setHint("🔄 Koblet – venter på receiver…", false);
     return;
@@ -122,18 +143,28 @@ function sendStateToReceiver() {
     players: sortedPlayers()
   };
 
-  console.log("[SENDER] sending STATE:", payload);
+  session.sendMessage(NAMESPACE, payload).catch(() => {
+    receiverReady = false;
+    setHint("🔄 Venter på receiver…", false);
+  });
+}
 
-  session.sendMessage(NAMESPACE, payload)
-    .then(() => {
-      setHint("✅ Sender oppdateringer til TV", true);
-    })
-    .catch((err) => {
-      console.warn("[SENDER] sendMessage failed:", err);
-      // Hvis receiveren restartet, mister vi READY-status
-      receiverReady = false;
-      setHint("🔄 Receiver restartet? Venter på receiver…", false);
-    });
+function sendFinishToReceiver() {
+  const session = getSession();
+  if (!session) return alert("Koble til Chromecast først.");
+
+  const top = sortedPlayers().slice(0, 3);
+  if (top.length === 0) return alert("Legg til minst én spiller først.");
+
+  const payload = {
+    type: "FINISH",
+    updatedAt: Date.now(),
+    winners: top
+  };
+
+  session.sendMessage(NAMESPACE, payload).catch(() => {
+    alert("Kunne ikke sende vinnerne til TV. Sjekk tilkobling.");
+  });
 }
 
 // ---------------- UI actions ----------------
@@ -172,23 +203,26 @@ function resetAll() {
   render();
 }
 
+// ---------------- render ----------------
 function render() {
   const sorted = sortedPlayers();
+  const runFlip = animateReorder(listEl);
 
   listEl.innerHTML = sorted.map((p, idx) => `
-    <div class="row">
-      <div class="rank">#${idx + 1}</div>
-      <div class="name">${escapeHtml(p.name)}</div>
-      <div class="points">${p.points} pts</div>
+    <div class="player-row" data-key="${escapeHtml(p.name)}">
+      <div class="rank-pill">#${idx + 1}</div>
+      <div class="p-name">${escapeHtml(p.name)}</div>
+      <div class="p-points">${p.points} pts</div>
       <div class="actions">
-        <button class="small" data-add="${p.name}">+1</button>
-        <button class="small" data-add3="${p.name}">+3</button>
-        <button class="small" data-sub="${p.name}">-1</button>
-        <button class="remove" data-del="${p.name}">Fjern</button>
+        <button class="mini add" data-add="${escapeHtml(p.name)}">+1</button>
+        <button class="mini add" data-add3="${escapeHtml(p.name)}">+3</button>
+        <button class="mini sub" data-sub="${escapeHtml(p.name)}">-1</button>
+        <button class="mini del" data-del="${escapeHtml(p.name)}">Fjern</button>
       </div>
     </div>
   `).join("");
 
+  // bind actions
   listEl.querySelectorAll("button").forEach(btn => {
     if (btn.dataset.add) btn.onclick = () => changePoints(btn.dataset.add, +1);
     if (btn.dataset.add3) btn.onclick = () => changePoints(btn.dataset.add3, +3);
@@ -196,13 +230,15 @@ function render() {
     if (btn.dataset.del) btn.onclick = () => removePlayer(btn.dataset.del);
   });
 
-  // send oppdatering hver gang UI endres
+  // animate reorder
+  requestAnimationFrame(runFlip);
+
+  // push updates to TV
   sendStateToReceiver();
 }
 
 // ---------------- Cast init ----------------
 window.__onGCastApiAvailable = (available) => {
-  console.log("__onGCastApiAvailable:", available);
   if (!available) {
     setHint("⚠️ Cast API ikke tilgjengelig (bruk Chrome)", false);
     return;
@@ -213,15 +249,12 @@ window.__onGCastApiAvailable = (available) => {
   const ctx = getContext();
   ctx.setOptions({
     receiverApplicationId: APP_ID,
-    // viktig: for å unngå å auto-join’e countdown-sessionen
     autoJoinPolicy: chrome.cast.AutoJoinPolicy.PAGE_SCOPED
   });
 
   ctx.addEventListener(
     cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
     (e) => {
-      console.log("SESSION_STATE_CHANGED:", e.sessionState, "errorCode:", e.errorCode);
-
       const session = getSession();
 
       if (e.sessionState === cast.framework.SessionState.SESSION_STARTED ||
@@ -232,12 +265,10 @@ window.__onGCastApiAvailable = (available) => {
 
         attachMessageListeners(session);
 
-        // ✅ NY: Be receiveren sende READY (så vi ikke misser den pga timing)
+        // HELLO så receiver sender READY uansett timing
         session.sendMessage(NAMESPACE, { type: "HELLO", t: Date.now() }).catch(()=>{});
-        
-        startPing();
 
-        // Gi receiver litt tid til å sende READY
+        startPing();
         setTimeout(sendStateToReceiver, 800);
       }
 
@@ -262,6 +293,6 @@ nameInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") addBtn.click();
 });
 resetBtn.onclick = resetAll;
+finishBtn.onclick = () => sendFinishToReceiver();
 
-// Start
 render();
