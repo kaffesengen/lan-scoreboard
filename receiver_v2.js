@@ -1,6 +1,6 @@
 /**
- * LAN Scoreboard - Receiver V2 (Fullversjon)
- * Håndterer visning på TV via Chromecast CAF
+ * LAN Scoreboard - Receiver V2 (FULLVERSJON)
+ * Støtter: Dynamiske nivåer, Avatarer, FLIP-animasjon og Vinner-effekter
  */
 
 const NAMESPACE = "urn:x-cast:com.kaffesengen.lanscoreboard";
@@ -11,8 +11,7 @@ const overlayEl = document.getElementById("winnerOverlay");
 const winnerCardsEl = document.getElementById("winnerCards");
 const sparklesEl = document.getElementById("sparkles");
 
-// --- Hjelpefunksjoner ---
-
+// --- Status og Sikkerhet ---
 function setStatus(t) {
   if (status2El) status2El.textContent = t;
   console.log("[RECEIVER]", t);
@@ -25,7 +24,7 @@ function esc(s) {
   }[c]));
 }
 
-// --- FLIP animasjon for myk re-sortering ---
+// --- FLIP-animasjon (Gjør at brikkene flytter seg mykt ved poengendring) ---
 function animateReorder(container) {
   const children = Array.from(container.children);
   const first = new Map();
@@ -51,7 +50,7 @@ function animateReorder(container) {
   };
 }
 
-// --- Vinner-effekter (Sparkles) ---
+// --- Vinner-skjerm effekter (Konfetti/Sparkles) ---
 function makeSparkles() {
   sparklesEl.innerHTML = "";
   for (let i = 0; i < 40; i++) {
@@ -65,7 +64,7 @@ function makeSparkles() {
   }
 }
 
-// --- Vinner-skjerm (Overlay) ---
+// --- Vis Vinner-overlay ---
 function showWinners(winners) {
   const safe = Array.isArray(winners) ? winners : [];
   const [first, second, third] = [safe[0], safe[1], safe[2]];
@@ -97,21 +96,21 @@ function showWinners(winners) {
   sparklesEl.classList.add("show");
   makeSparkles();
 
-  // Skjuler automatisk etter 15 sekunder
+  // Skjul vinner-skjermen etter 15 sekunder
   setTimeout(() => {
     overlayEl.classList.remove("show");
     sparklesEl.classList.remove("show");
   }, 15000);
 }
 
-// --- Scoreboard Grid Oppdatering ---
+// --- Tegn Rutenettet (Grid) på TV-en ---
 function renderGrid(players) {
   const top9 = (Array.isArray(players) ? players : []).slice(0, 9);
   const runFlip = animateReorder(gridEl);
 
   gridEl.innerHTML = top9.map((p, i) => {
-    // Hent rank-data sendt fra senderen
-    const rank = p.rank || { icon: "🥉", class: "rank-bronze", name: "Bronse" };
+    // Rank-info sendes ferdig beregnet fra sender.js (Admin-valgene)
+    const rank = p.rank || { icon: "", class: "rank-none", name: "" };
     
     return `
       <div class="player-tile ${rank.class}" data-key="${esc(p.name)}">
@@ -128,14 +127,13 @@ function renderGrid(players) {
   requestAnimationFrame(runFlip);
 }
 
-// --- Chromecast Receiver Setup ---
-
+// --- Chromecast Konfigurasjon ---
 window.onerror = (m) => setStatus("❌ JS-feil: " + m);
 
 const context = cast.framework.CastReceiverContext.getInstance();
 const options = new cast.framework.CastReceiverOptions();
 
-// Hindrer at TV-en skrur av appen ved inaktivitet under LAN-et
+// Hindre at TV-en går i dvale under LAN
 options.disableIdleTimeout = true;
 
 context.addCustomMessageListener(NAMESPACE, (event) => {
@@ -153,7 +151,7 @@ context.addCustomMessageListener(NAMESPACE, (event) => {
   }
 
   if (data?.type === "STATE") {
-    // Oppdaterer rutenettet med spillere og deres nivåer
+    // Her kommer spillerlisten med avatarene og de dynamiske nivåene fra Admin
     renderGrid(data.players || []);
     return;
   }
@@ -165,6 +163,6 @@ context.addCustomMessageListener(NAMESPACE, (event) => {
   }
 });
 
-// Start mottakeren
+// Start Receiver
 context.start(options);
 setStatus("Klar for LAN! 🚀");
