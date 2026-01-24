@@ -1,98 +1,43 @@
-const NAMESPACE = "urn:x-cast:com.kaffesengen.lanscoreboard";
-let castSession = null;
-let players = [];
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LAN Scoreboard (Receiver)</title>
 
-// Artige emojis å velge mellom
-const AVATAR_EMOJIS = [
-  '😀', '😎', '🥳', '🚀', '👽', '🦄', '🤖', '👾', '👻', '🦖', '🐉', '🐙', '🐸', '🐔', '🐧', '🦉',
-  '🦊', '🐻', '🐼', '🐯', '🦁', '🙈', '🙉', '🙊', '🐵', '🐱', '🐶', '🐭', '🐹', '🐰', '🦝', '🐴',
-  '🐷', '🐮', '🐞', '🕷️', '🦋', '🐠', '🐬', '🐳', '🦈', '🦀', '🐢', '🐍', '🌲', '🍄', '🍓', '🍕',
-  '🍔', '🍟', '🍦', '🍩', '🍬', '🍭', '🌈', '🌟', '✨', '⚡', '🔥', '💧', '🌊', '❄️', '☃️', '☀️',
-  '🌙', '⭐', '🌎', '🌍', '🌏', '💯', '🏆', '🏅', '🥇', '🥈', '🥉', '🎯', '🎮', '🎲', '🧩', '🎨',
-  '🎵', '🎶', '🥁', '🎸', '🎺', '🎻', '🎹', '🎷', '🎤', '🎧', '🎬', '🎭', '🎪', '🪄', '🎩', '👑'
-];
+  <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
 
+<body>
+  <!-- Winner overlay -->
+  <div class="winner-overlay" id="winnerOverlay">
+    <div class="winner-wrap">
+      <div class="winner-title">🏆 VINNERE 🏆</div>
 
-// Fyller avatar-dropdownen
-const avatarSelect = document.getElementById('avatarSelect');
-AVATAR_EMOJIS.forEach(emoji => {
-  const option = document.createElement('option');
-  option.value = emoji;
-  option.textContent = emoji;
-  avatarSelect.appendChild(option);
-});
+      <div class="winner-cards" id="winnerCards"></div>
+    </div>
+  </div>
 
-// Initialiser Cast
-window.__onGCastApiAvailable = function(isAvailable) {
-  if (isAvailable) {
-    const context = cast.framework.CastContext.getInstance();
-    context.setOptions({
-      receiverApplicationId: 'DIN_APP_ID', // Bytt ut med din ID fra Cast Console
-      autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
-    });
+  <div class="sparkles" id="sparkles"></div>
 
-    context.addEventListener(cast.framework.CastContextEventType.SESSION_STATE_CHANGED, (event) => {
-      castSession = context.getCurrentSession();
-      const castHint = document.getElementById('castHint');
-      if (event.sessionState === cast.framework.SessionState.SESSION_STARTED) {
-        castHint.textContent = 'Tilkoblet TV ✅';
-        castHint.classList.add('ok');
-        broadcastState(); // Send status umiddelbart ved tilkobling
-      } else {
-        castHint.textContent = 'Klar for oppkobling';
-        castHint.classList.remove('ok');
-      }
-    });
-  }
-};
+  <div class="app">
+    <header class="topbar glass">
+      <div class="topbar-left">
+        <h1>LAN Scoreboard</h1>
+        <p id="status2">Venter på sender…</p>
+      </div>
+    </header>
 
-// Funksjon for å sende data til TV
-function broadcastState() {
-  castSession = cast.framework.CastContext.getInstance().getCurrentSession();
-  if (castSession) {
-    const sortedPlayers = [...players].sort((a, b) => b.points - a.points);
-    const msg = {
-      type: "STATE",
-      players: sortedPlayers
-    };
-    castSession.sendMessage(NAMESPACE, msg);
-  }
-}
+    <section class="card">
+      <h2>TOPP 9</h2>
+      <div class="grid9" id="grid"></div>
+    </section>
+  </div>
 
-// Legg til spiller
-document.getElementById('addBtn').onclick = () => {
-  const nameInput = document.getElementById('nameInput');
-  const name = nameInput.value.trim();
-  const avatar = avatarSelect.value; // Hent valgt avatar
-
-  if (name && !players.find(p => p.name === name)) {
-    players.push({ name: name, points: 0, avatar: avatar }); // Lagrer avataren
-    nameInput.value = '';
-    // Velg en ny tilfeldig avatar etter at en er lagt til for å oppmuntre til variasjon
-    avatarSelect.value = AVATAR_EMOJIS[Math.floor(Math.random() * AVATAR_EMOJIS.length)];
-    renderLocalList();
-    broadcastState();
-  }
-};
-
-// "FERDIG" - Trigger vinner-overlay på TV
-document.getElementById('finishBtn').onclick = () => {
-  castSession = cast.framework.CastContext.getInstance().getCurrentSession();
-  if (castSession) {
-    const winners = [...players].sort((a, b) => b.points - a.points).slice(0, 3);
-    castSession.sendMessage(NAMESPACE, {
-      type: "FINISH",
-      winners: winners
-    });
-  }
-};
-
-// Reset funksjon
-document.getElementById('resetBtn').onclick = () => {
-  if (confirm("Vil du slette alle spillere og starte på nytt?")) {
-    players = [];
-    renderLocalList();
-    broadcastState();
+  <script src="receiver_v2.js"></script>
+</body>
+</html>    broadcastState();
   }
 };
 
