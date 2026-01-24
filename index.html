@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>LAN Scoreboard (Sender)</title>
 
-  <!-- Cast SDK (samme som i countdown-appen din) -->
   <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
 
   <link rel="stylesheet" href="style.css" />
@@ -25,14 +24,32 @@
     </header>
 
     <section class="card">
-      <h2>Spillere</h2>
+      <h2>Legg til spiller</h2>
       <div class="controls">
-  <input id="nameInput" placeholder="Brukernavn..." maxlength="16" />
-  <button id="addBtn" class="btn btn-primary">Legg til</button>
-  <button id="finishBtn" class="btn btn-glow">FERDIG</button>
-  <button id="resetBtn" class="btn btn-danger">Reset</button>
-</div>
-
+        <select id="avatarSelect" class="avatar-select">
+          <option value="🎮">🎮 Gamer</option>
+          <option value="🚀">🚀 Rakett</option>
+          <option value="🦄">🦄 Enhjørning</option>
+          <option value="🦖">🦖 Dino</option>
+          <option value="🤖">🤖 Robot</option>
+          <option value="👾">👾 Monster</option>
+          <option value="👻">👻 Spøkelse</option>
+          <option value="🐱">🐱 Katt</option>
+          <option value="🐶">🐶 Hund</option>
+          <option value="🦊">🦊 Rev</option>
+          <option value="🦁">🦁 Løve</option>
+          <option value="🐧">🐧 Pingvin</option>
+          <option value="🌈">🌈 Regnbue</option>
+          <option value="🔥">🔥 Flamme</option>
+          <option value="💎">💎 Diamant</option>
+          <option value="🍕">🍕 Pizza</option>
+        </select>
+        
+        <input id="nameInput" placeholder="Brukernavn..." maxlength="16" />
+        <button id="addBtn" class="btn btn-primary">Legg til</button>
+        <button id="finishBtn" class="btn btn-glow">FERDIG</button>
+        <button id="resetBtn" class="btn btn-danger">Reset</button>
+      </div>
 
       <div class="hint" id="castHint">Klar for oppkobling</div>
     </section>
