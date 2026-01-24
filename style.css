@@ -461,3 +461,133 @@ google-cast-launcher:active{ transform: translateY(0px) scale(0.98) rotate(-6deg
   .winner-title{ font-size: 38px; }
   .win-name{ font-size: 34px; }
 }
+
+/* ... (Din eksisterende CSS-kode her) ... */
+
+/* ---------- Avatar Select (Sender) ---------- */
+.avatar-select {
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.25);
+  color: var(--text);
+  outline: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+  font-size: 1.2rem; /* Gjør emoji større */
+  appearance: none; /* Fjern standard browser-stil */
+  cursor: pointer;
+  min-width: 60px;
+  text-align: center;
+  transition: transform 220ms var(--ease2), border 220ms var(--ease2), background 220ms var(--ease2);
+}
+.avatar-select:focus {
+  transform: translatey(-1px);
+  border-color: rgba(124,92,255,0.55);
+  background: rgba(0,0,0,0.30);
+}
+
+/* ---------- Spiller-rad på sender med avatar ---------- */
+.player-row{
+  display:grid;
+  /* Justert grid-kolonner for å inkludere avataren */
+  grid-template-columns: 64px 40px 1fr 110px 280px; /* Rank | Avatar | Navn | Poeng | Actions */
+  gap: 10px;
+  align-items:center;
+  padding: 12px;
+  border-radius: var(--r2);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.18);
+  overflow:hidden;
+  position: relative;
+  will-change: transform;
+  transition: background 200ms var(--ease2), border 200ms var(--ease2);
+}
+.player-row:hover{
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(124,92,255,0.22);
+}
+
+.p-avatar{
+  font-size: 1.6rem; /* Større emoji for lesbarhet */
+  line-height: 1; /* Sikre vertikal sentrering */
+}
+
+/* responsive tweaks for sender player-row */
+@media (max-width: 900px){
+  .player-row{ grid-template-columns: 64px 40px 1fr 90px 1fr; } /* Rank | Avatar | Navn | Poeng | Actions */
+  .actions{ justify-content:flex-start; }
+}
+@media (max-width: 700px){
+  .player-row{ grid-template-columns: 64px 40px 1fr 90px; } /* Rank | Avatar | Navn | Poeng */
+  .actions{ grid-column: 1 / -1; justify-content:flex-start; }
+}
+
+/* ---------- player-tile på receiver (Topp 9) ---------- */
+.player-tile{
+  padding: 14px;
+  border-radius: var(--r2);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 18px 30px rgba(0,0,0,0.22);
+  min-height: 86px;
+  position: relative;
+  overflow:hidden;
+  display: grid; /* Bruk grid for å justere innholdet */
+  grid-template-columns: auto 1fr; /* For rank/avatar og navn/poeng */
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 4px 10px;
+}
+.player-tile .tile-rank{
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  font-size: 1.2rem;
+  font-weight: 950;
+  color: rgba(255,255,255,0.85);
+}
+.player-tile .tile-avatar{
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
+  font-size: 2.2rem; /* Stor emoji på TV */
+  line-height: 1;
+  text-align: center;
+}
+.player-tile .tile-name{
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+  font-size: 22px;
+  font-weight: 950;
+  margin: 0; /* Fjern default margin */
+}
+.player-tile .tile-pts{
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
+  margin: 0; /* Fjern default margin */
+  color: var(--muted);
+  font-weight: 900;
+  font-size: 1.1rem;
+}
+
+
+/* ---------- winner overlay (receiver) med avatarer ---------- */
+.win-card{
+  /* ... (din eksisterende styling) ... */
+}
+
+.win-avatar{
+  font-size: 6rem; /* Ekstra stor avatar for vinnerne */
+  margin: 10px 0 15px;
+  line-height: 1;
+  animation: bounceIn 800ms var(--ease2) both; /* Ny animasjon for avatar */
+}
+
+/* Ny animasjon for avataren når den vises i vinner-overlay */
+@keyframes bounceIn {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.1); opacity: 1; }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+/* ... (Resten av din eksisterende CSS-kode, inkludert keyframes) ... */
