@@ -647,3 +647,34 @@ google-cast-launcher:active{ transform: translateY(0px) scale(0.98) rotate(-6deg
   margin-bottom: 5px;
 }
 .rank-row input[type="number"] { width: 50px; background: #000; color: #fff; border: 1px solid #444; }
+
+/* Søppelbøtte-knapp */
+.mini.del {
+  background: rgba(255, 77, 109, 0.2);
+  border-color: rgba(255, 77, 109, 0.4);
+  font-size: 1.2rem;
+  padding: 5px 10px;
+}
+
+.mini.del:hover {
+  background: var(--danger);
+}
+
+/* Badge for nivå i lista */
+.badge {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  margin-left: 10px;
+}
+
+/* Levende nivåer på TV */
+.rank-gold { border: 2px solid #ffd700; box-shadow: 0 0 20px #ffd700; }
+.rank-diamond { border: 2px solid #b9f2ff; box-shadow: 0 0 30px #b9f2ff; animation: pulse 2s infinite; }
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); filter: brightness(1.2); }
+  100% { transform: scale(1); }
+}
