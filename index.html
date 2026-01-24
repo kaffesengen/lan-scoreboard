@@ -3,27 +3,34 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>LAN Scoreboard (Sender)</title>
-
+  <title>LAN Scoreboard (Admin)</title>
   <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
-
   <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
   <div class="app">
-    <header class="topbar">
+    <header class="topbar glass">
       <div class="topbar-left">
         <h1>LAN Scoreboard</h1>
-        <p>Konfigurer her på PC – vis på TV via Chromecast.</p>
+        <p>Admin-panel</p>
       </div>
-
       <div class="topbar-right">
         <google-cast-launcher></google-cast-launcher>
       </div>
     </header>
 
-    <section class="card">
+    <section class="card glass">
+      <h2>Spillinnstillinger</h2>
+      <div class="controls">
+        <div class="admin-group">
+          <label>Vinnergrense (poeng):</label>
+          <input type="number" id="winLimitInput" value="50" style="width: 70px;" />
+        </div>
+        <button id="updateSettingsBtn" class="btn mini">Lagre regler</button>
+      </div>
+    </section>
+
+    <section class="card glass">
       <h2>Legg til spiller</h2>
       <div class="controls">
         <select id="avatarSelect" class="avatar-select">
@@ -33,33 +40,22 @@
           <option value="🦖">🦖 Dino</option>
           <option value="🤖">🤖 Robot</option>
           <option value="👾">👾 Monster</option>
-          <option value="👻">👻 Spøkelse</option>
           <option value="🐱">🐱 Katt</option>
-          <option value="🐶">🐶 Hund</option>
-          <option value="🦊">🦊 Rev</option>
-          <option value="🦁">🦁 Løve</option>
-          <option value="🐧">🐧 Pingvin</option>
-          <option value="🌈">🌈 Regnbue</option>
-          <option value="🔥">🔥 Flamme</option>
           <option value="💎">💎 Diamant</option>
-          <option value="🍕">🍕 Pizza</option>
         </select>
-        
         <input id="nameInput" placeholder="Brukernavn..." maxlength="16" />
         <button id="addBtn" class="btn btn-primary">Legg til</button>
         <button id="finishBtn" class="btn btn-glow">FERDIG</button>
         <button id="resetBtn" class="btn btn-danger">Reset</button>
       </div>
-
       <div class="hint" id="castHint">Klar for oppkobling</div>
     </section>
 
-    <section class="card">
+    <section class="card glass">
       <h2>Ranking</h2>
       <div id="list" class="list"></div>
     </section>
   </div>
-
   <script src="sender.js"></script>
 </body>
 </html>
