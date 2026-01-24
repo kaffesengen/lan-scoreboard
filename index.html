@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>LAN Scoreboard - Admin</title>
+  <title>LAN Scoreboard (Admin)</title>
   <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -11,8 +11,8 @@
   <div class="app">
     <header class="topbar glass">
       <div class="topbar-left">
-        <h1>LAN Admin</h1>
-        <p id="castStatus">Klar for tilkobling</p>
+        <h1>LAN Scoreboard</h1>
+        <p id="castHint">Klar for oppkobling</p>
       </div>
       <div class="topbar-right">
         <google-cast-launcher></google-cast-launcher>
@@ -20,15 +20,21 @@
     </header>
 
     <section class="card glass">
-      <h2>Game Rules & Ranks</h2>
-      <div class="admin-grid">
-        <div class="input-group">
-          <label>Vinnergrense (Poeng):</label>
-          <input type="number" id="winLimitInput" value="50">
-        </div>
-        <div class="rank-manager" id="rankManager">
+      <h2>Spillinnstillinger & Nivåer</h2>
+      <div class="admin-panel">
+        <div class="controls" style="flex-direction: column; align-items: flex-start;">
+          <div class="input-group">
+            <label>Vinnergrense (Poeng): </label>
+            <input type="number" id="winLimitInput" value="50" style="width: 80px;">
           </div>
-        <button id="saveSettingsBtn" class="btn btn-glow">Lagre & Oppdater TV</button>
+          
+          <div class="rank-config-list" style="width: 100%; margin-top: 15px;">
+            <p><small>Aktiver nivåer og sett poengkrav:</small></p>
+            <div id="rankManager">
+              </div>
+          </div>
+          <button id="updateSettingsBtn" class="btn btn-glow" style="width: 100%; margin-top: 10px;">Lagre Regler & Oppdater TV</button>
+        </div>
       </div>
     </section>
 
@@ -44,8 +50,9 @@
           <option value="👾">👾 Monster</option>
           <option value="🐱">🐱 Katt</option>
           <option value="💎">💎 Diamant</option>
+          <option value="🍕">🍕 Pizza</option>
         </select>
-        <input id="nameInput" placeholder="Navn..." maxlength="16" />
+        <input id="nameInput" placeholder="Brukernavn..." maxlength="16" />
         <button id="addBtn" class="btn btn-primary">Legg til</button>
       </div>
     </section>
@@ -53,8 +60,8 @@
     <section class="card glass">
       <h2>Ranking</h2>
       <div id="list" class="list"></div>
-      <div class="controls" style="margin-top:20px;">
-        <button id="finishBtn" class="btn btn-glow">AVSLUTT KAMP</button>
+      <div style="margin-top: 20px; display: flex; gap: 10px;">
+        <button id="finishBtn" class="btn btn-glow">FERDIG (Vis vinnere)</button>
         <button id="resetBtn" class="btn btn-danger">Slett alt</button>
       </div>
     </section>
